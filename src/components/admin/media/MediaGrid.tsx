@@ -25,7 +25,11 @@ export function MediaGrid({ items }: { items: GalleryItem[] }) {
     if (!ok) return
     setBusy(item.id)
     try {
-      await deleteGalleryItem(item.id)
+      const { error } = await deleteGalleryItem(item.id)
+      if (error) {
+        toast.error(error)
+        return
+      }
     } finally {
       setBusy(null)
     }
