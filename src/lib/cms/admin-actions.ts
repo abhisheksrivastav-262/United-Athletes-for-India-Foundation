@@ -1241,6 +1241,116 @@ export async function getEnquiryById(id: string) {
   return data
 }
 
+export function normalizeCaseStudyStatus(status?: unknown): string {
+  if (status === "published" || status === "active" || !status) return "published"
+  if (status === "draft" || status === "inactive") return "draft"
+  if (status === "archived") return "archived"
+  return String(status)
+}
+
+export function normalizePlayerRegistrationStatus(status?: unknown): string {
+  if (!status) return "new"
+  return String(status)
+}
+
+// ── Case Studies ─────────────────────────────────────────────────────────────
+
+export async function createCaseStudy(input: Record<string, unknown>): Promise<Result<unknown>> {
+  const supabase = await createClient()
+  const payload = {
+    ...input,
+    status: normalizeCaseStudyStatus(input.status),
+  }
+  const { data, error } = await supabase.from("case_studies").insert(payload).select().single()
+  if (error) return { data: null, error: errMessage(error) }
+  return { data, error: null }
+}
+
+export async function updateCaseStudy(id: string, input: Record<string, unknown>): Promise<Result<unknown>> {
+  const supabase = await createClient()
+  const payload = {
+    ...input,
+    ...(input.status !== undefined ? { status: normalizeCaseStudyStatus(input.status) } : {}),
+  }
+  const { data, error } = await supabase.from("case_studies").update(payload).eq("id", id).select().single()
+  if (error) return { data: null, error: errMessage(error) }
+  return { data, error: null }
+}
+
+export async function deleteCaseStudy(id: string): Promise<Result<null>> {
+  const supabase = await createClient()
+  const { error } = await supabase.from("case_studies").delete().eq("id", id)
+  if (error) return { data: null, error: errMessage(error) }
+  return { data: null, error: null }
+}
+
+export async function getCaseStudyById(id: string) {
+  const supabase = await createClient()
+  const { data, error } = await supabase.from("case_studies").select("*").eq("id", id).maybeSingle()
+  if (error) { console.error("[cms] getCaseStudyById:", error.message); return null }
+  return data
+}
+
+export async function getCaseStudies(opts?: { status?: string; limit?: number; search?: string }) {
+  const supabase = await createClient()
+  let q = supabase
+    .from("case_studies")
+    .select("*")
+    .order("display_order", { ascending: true })
+    .order("created_at", { ascending: false })
+  if (opts?.status && opts.status !== "all") q = q.eq("status", normalizeCaseStudyStatus(opts.status))
+  if (opts?.search) q = q.ilike("title", `%${opts.search}%`)
+  if (opts?.limit) q = q.limit(opts.limit)
+  const { data, error } = await q
+  if (error) { console.error("[cms] getCaseStudies:", error.message); return [] }
+  return data || []
+}
+
+export async function getAllCaseStudies() {
+  return getCaseStudies()
+}
+
+// ── Player Registrations ─────────────────────────────────────────────────────
+
+export async function updatePlayerRegistration(id: string, status: string, notes?: string): Promise<Result<unknown>> {
+  const supabase = await createClient()
+  const updateData: Record<string, unknown> = { status }
+  if (notes !== undefined) updateData.admin_notes = notes
+  const { data, error } = await supabase
+    .from("player_registrations")
+    .update(updateData)
+    .eq("id", id)
+    .select()
+    .single()
+  if (error) return { data: null, error: errMessage(error) }
+  return { data, error: null }
+}
+
+export async function deletePlayerRegistration(id: string): Promise<Result<null>> {
+  const supabase = await createClient()
+  const { error } = await supabase.from("player_registrations").delete().eq("id", id)
+  if (error) return { data: null, error: errMessage(error) }
+  return { data: null, error: null }
+}
+
+export async function getPlayerRegistrations(opts?: { status?: string; limit?: number; search?: string }) {
+  const supabase = await createClient()
+  let q = supabase.from("player_registrations").select("*").order("created_at", { ascending: false })
+  if (opts?.status && opts.status !== "all") q = q.eq("status", opts.status)
+  if (opts?.search) q = q.or(`name.ilike.%${opts.search}%,email.ilike.%${opts.search}%,sport.ilike.%${opts.search}%,city.ilike.%${opts.search}%`)
+  if (opts?.limit) q = q.limit(opts.limit)
+  const { data, error } = await q
+  if (error) { console.error("[cms] getPlayerRegistrations:", error.message); return [] }
+  return data || []
+}
+
+export async function getPlayerRegistrationById(id: string) {
+  const supabase = await createClient()
+  const { data, error } = await supabase.from("player_registrations").select("*").eq("id", id).maybeSingle()
+  if (error) { console.error("[cms] getPlayerRegistrationById:", error.message); return null }
+  return data
+}
+
 // ── Admin users (admin_profiles view over profiles) ──────────────────────────
 
 export async function getAllAdminProfiles() {
@@ -1292,6 +1402,7 @@ export async function getDashboardStats() {
     eventsCount, programmesCount, athletesCount, teamsCount,
     galleryCount, testimonialsCount, enquiriesCount, newEnquiriesCount,
     usersCount, recentArticles, recentEvents, recentEnquiries,
+    caseStudiesCount, playerRegsCount, newPlayerRegsCount,
   ] = await Promise.all([
     supabase.from("articles").select("*", { count: "exact", head: true }),
     supabase.from("articles").select("*", { count: "exact", head: true }).eq("status", "published"),
@@ -1308,6 +1419,9 @@ export async function getDashboardStats() {
     supabase.from("articles").select("id, title, status, created_at").order("created_at", { ascending: false }).limit(5),
     supabase.from("events").select("id, title, event_date, status").order("created_at", { ascending: false }).limit(5),
     supabase.from("enquiries").select("*").order("created_at", { ascending: false }).limit(5),
+    supabase.from("case_studies").select("*", { count: "exact", head: true }),
+    supabase.from("player_registrations").select("*", { count: "exact", head: true }),
+    supabase.from("player_registrations").select("*", { count: "exact", head: true }).eq("status", "new"),
   ])
 
   return {
@@ -1327,6 +1441,9 @@ export async function getDashboardStats() {
       new: newEnquiriesCount.count || 0,
     },
     users: usersCount.count || 0,
+    caseStudies: caseStudiesCount.count || 0,
+    playerRegistrations: playerRegsCount.count || 0,
+    newPlayerRegistrations: newPlayerRegsCount.count || 0,
     recentArticles: recentArticles.data || [],
     recentEvents: recentEvents.data || [],
     recentEnquiries: recentEnquiries.data || [],

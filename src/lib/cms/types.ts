@@ -108,6 +108,20 @@ export type Enquiry = {
   created_at: string; updated_at: string
 }
 
+export type CaseStudy = {
+  id: string; title: string; slug: string; excerpt: string | null; content: string | null
+  featured_image: string | null; location: string | null
+  status: 'draft' | 'published' | 'archived'; display_order: number
+  published_at: string | null; created_at: string; updated_at: string
+}
+
+export type PlayerRegistration = {
+  id: string; name: string; email: string; phone: string | null
+  age: number | null; gender: string | null; sport: string | null; city: string | null
+  message: string | null; status: 'new' | 'contacted' | 'selected' | 'rejected'
+  admin_notes: string | null; created_at: string; updated_at: string
+}
+
 export type AdminUser = {
   id: string; user_id: string; name: string; email: string
   role: 'super_admin' | 'admin' | 'editor'; is_active: boolean
@@ -151,6 +165,7 @@ export type DashboardStats = {
   articles: number; publishedArticles: number; draftArticles: number
   events: number; programmes: number; athletes: number; teams: number
   gallery: number; testimonials: number; enquiries: number; users: number
+  caseStudies: number; playerRegistrations: number; newPlayerRegistrations: number
   recentArticles: Article[]; recentEvents: Event[]; recentEnquiries: Enquiry[]
 }
 
@@ -158,6 +173,8 @@ export type DashboardStats = {
 export type AdminRole = "super_admin" | "admin" | "editor"
 
 export type NavigationItemType = NavigationItem
+export type CaseStudyType = CaseStudy
+export type PlayerRegistrationType = PlayerRegistration
 export type ArticleType = Article
 export type CategoryType = Category
 export type EventType = Event

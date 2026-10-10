@@ -9,7 +9,7 @@ const DEFAULT_SETTINGS: RazorpaySettings = {
   is_enabled: true,
   mode: "test",
   currency: "INR",
-  min_amount: 100,
+  min_amount: 1,
   suggested_amounts: [500, 1000, 2500, 5000, 10000],
   tax_benefit_info: "Donations to UnitedAthletes for India Foundation may be eligible for tax exemption under Section 80G.",
   organization_name: "UnitedAthletes for India Foundation",
@@ -37,7 +37,7 @@ export async function getRazorpaySettings(): Promise<RazorpaySettings> {
         is_enabled: val.is_enabled ?? true,
         mode: val.mode || (key_id.startsWith("rzp_live") ? "live" : "test"),
         currency: val.currency || "INR",
-        min_amount: Number(val.min_amount) || 100,
+        min_amount: Number(val.min_amount) || 1,
         suggested_amounts: Array.isArray(val.suggested_amounts) && val.suggested_amounts.length > 0
           ? val.suggested_amounts
           : [500, 1000, 2500, 5000, 10000],
@@ -80,7 +80,7 @@ export async function updateRazorpaySettings(
       mode: input.key_id
         ? (input.key_id.startsWith("rzp_live") ? "live" : "test")
         : (input.mode || current.mode),
-      min_amount: Number(input.min_amount) || 100,
+      min_amount: Number(input.min_amount) || 1,
       suggested_amounts: Array.isArray(input.suggested_amounts) && input.suggested_amounts.length > 0
         ? input.suggested_amounts.map(Number).filter((n) => !isNaN(n) && n > 0)
         : current.suggested_amounts,
@@ -161,8 +161,8 @@ export async function createDonationOrder(input: {
   amount: number
   currency?: string
   donor_name: string
-  donor_email: string
-  donor_phone?: string
+  donor_email?: string
+  donor_phone: string
   pan_number?: string
   purpose?: string
   message?: string
@@ -183,7 +183,7 @@ export async function createDonationOrder(input: {
       return { success: false, error: "Online donations are currently disabled. Please contact us directly." }
     }
 
-    const minAmount = settings.min_amount || 100
+    const minAmount = settings.min_amount || 1
     if (!input.amount || input.amount < minAmount) {
       return { success: false, error: `Minimum donation amount is ₹${minAmount}` }
     }
@@ -192,14 +192,21 @@ export async function createDonationOrder(input: {
       return { success: false, error: "Donor name is required" }
     }
 
-    if (!input.donor_email || !input.donor_email.includes("@")) {
-      return { success: false, error: "A valid email is required for the donation receipt" }
+    const phoneDigits = (input.donor_phone || "").replace(/\D/g, "")
+    if (phoneDigits.length < 10) {
+      return { success: false, error: "A valid 10-digit phone number is required" }
+    }
+
+    if (input.donor_email && input.donor_email.trim() && !input.donor_email.includes("@")) {
+      return { success: false, error: "Please enter a valid email address or leave it blank" }
     }
 
     const currency = input.currency || settings.currency || "INR"
     const amountInPaise = Math.round(input.amount * 100)
     const donationId = crypto.randomUUID()
     const receipt = `rcpt_${donationId.slice(0, 12)}`
+    const cleanEmail = input.donor_email?.trim().toLowerCase() || ""
+    const cleanPhone = input.donor_phone.trim()
 
     let razorpayOrderId: string | null = null
 
@@ -213,7 +220,8 @@ export async function createDonationOrder(input: {
         notes: {
           donation_id: donationId,
           donor_name: input.donor_name,
-          donor_email: input.donor_email,
+          donor_email: cleanEmail || "Not provided",
+          donor_phone: cleanPhone,
           purpose: input.purpose || "General Athlete Support",
         },
       }
@@ -247,8 +255,8 @@ export async function createDonationOrder(input: {
     const donationRecord: DonationRecord = {
       id: donationId,
       donor_name: input.donor_name.trim(),
-      donor_email: input.donor_email.trim().toLowerCase(),
-      donor_phone: input.donor_phone?.trim() || null,
+      donor_email: cleanEmail,
+      donor_phone: cleanPhone || null,
       pan_number: input.pan_number?.trim().toUpperCase() || null,
       amount: input.amount,
       currency,

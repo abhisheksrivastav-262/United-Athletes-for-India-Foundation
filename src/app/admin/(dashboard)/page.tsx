@@ -3,9 +3,10 @@ import {
   Newspaper, Calendar, Trophy, Users, BookOpen,
   Images, MessageSquareQuote, Mail, Activity, ArrowRight,
   Plus, Home as HomeIcon, PanelBottom, Navigation as NavIcon, FileBox, Settings as SettingsIcon,
+  FolderKanban, ClipboardList, IndianRupee,
 } from "lucide-react"
 import { Card, CardHeader, CardTitle, StatCard, Badge, THead, TBody, TR, TH, TD, Table } from "@/components/ui/admin"
-import { getDashboardStats, getArticles, getEnquiries, getActivityLogs } from "@/lib/cms/admin-actions"
+import { getDashboardStats, getArticles, getEnquiries, getActivityLogs, getPlayerRegistrations } from "@/lib/cms/admin-actions"
 import { requireAdmin } from "@/lib/cms/auth-server"
 import { formatDistanceToNow } from "@/lib/format"
 
@@ -13,11 +14,12 @@ export const dynamic = "force-dynamic"
 
 export default async function AdminDashboardPage() {
   const user = await requireAdmin()
-  const [stats, recentArticles, recentEnquiries, activityLogs] = await Promise.all([
+  const [stats, recentArticles, recentEnquiries, activityLogs, recentRegs] = await Promise.all([
     getDashboardStats(),
     getArticles({ limit: 5 }),
     getEnquiries({ limit: 8 }),
     getActivityLogs({ limit: 8 }),
+    getPlayerRegistrations({ limit: 5 }),
   ])
 
   return (
@@ -162,12 +164,55 @@ export default async function AdminDashboardPage() {
             icon={<Mail size={20} />}
           />
           <StatCard
+            label="Player Registrations"
+            value={(stats as { playerRegistrations?: number }).playerRegistrations ?? recentRegs.length}
+            hint={`${(stats as { newPlayerRegistrations?: number }).newPlayerRegistrations ?? 0} new`}
+            icon={<ClipboardList size={20} />}
+          />
+          <StatCard
+            label="Case Studies"
+            value={(stats as { caseStudies?: number }).caseStudies ?? 0}
+            icon={<FolderKanban size={20} />}
+          />
+          <StatCard
             label="Admin Users"
             value={stats.users}
             icon={<Activity size={20} />}
           />
         </div>
       )}
+
+      {/* Critical: registrations + donations at a glance */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Link
+          href="/admin/player-registrations"
+          className="group p-5 bg-white rounded-xl border border-slate-200 hover:border-[#C9A227] hover:shadow-md transition-all"
+        >
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+              <ClipboardList size={20} />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-900">Players Registered via Website</h3>
+              <p className="text-xs text-slate-500 mt-0.5">See every player connect-form entry with contact details.</p>
+            </div>
+          </div>
+        </Link>
+        <Link
+          href="/admin/donations"
+          className="group p-5 bg-white rounded-xl border border-slate-200 hover:border-[#C9A227] hover:shadow-md transition-all"
+        >
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-amber-50 text-[#C9A227] flex items-center justify-center">
+              <IndianRupee size={20} />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-900">Donations + Payment Details</h3>
+              <p className="text-xs text-slate-500 mt-0.5">Donor name, email, amount, Razorpay order/payment IDs.</p>
+            </div>
+          </div>
+        </Link>
+      </div>
 
       {/* Quick Actions */}
       <Card>
@@ -272,6 +317,49 @@ export default async function AdminDashboardPage() {
           </div>
         </Card>
       </div>
+
+      {/* Recent Player Registrations */}
+      <Card>
+        <CardHeader className="flex items-center justify-between">
+          <CardTitle>Recent Player Registrations</CardTitle>
+          <Link href="/admin/player-registrations" className="text-sm text-slate-500 hover:text-slate-900 flex items-center gap-1">
+            View all <ArrowRight size={12} />
+          </Link>
+        </CardHeader>
+        <div className="p-0">
+          {recentRegs.length === 0 ? (
+            <p className="p-5 text-sm text-slate-500">No player registrations yet.</p>
+          ) : (
+            <Table>
+              <THead>
+                <TR>
+                  <TH>Player</TH>
+                  <TH>Sport</TH>
+                  <TH>Status</TH>
+                </TR>
+              </THead>
+              <TBody>
+                {recentRegs.slice(0, 5).map((r: { id: string; name: string; email: string; sport?: string | null; status: string }) => (
+                  <TR key={r.id}>
+                    <TD>
+                      <Link href={`/admin/player-registrations/${r.id}`} className="font-medium hover:text-[#0B1D3A] line-clamp-1">
+                        {r.name}
+                      </Link>
+                      <div className="text-xs text-slate-500">{r.email}</div>
+                    </TD>
+                    <TD className="line-clamp-1">{r.sport || "—"}</TD>
+                    <TD>
+                      <Badge variant={r.status === "new" ? "warning" : r.status === "selected" ? "success" : "info"}>
+                        {r.status}
+                      </Badge>
+                    </TD>
+                  </TR>
+                ))}
+              </TBody>
+            </Table>
+          )}
+        </div>
+      </Card>
 
       {/* Activity Logs */}
       <Card>

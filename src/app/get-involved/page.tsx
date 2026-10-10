@@ -5,6 +5,7 @@ import { getPageBySlugServer } from "@/lib/cms/server"
 import PublicShell from "@/components/site/PublicShell"
 import { PageHero } from "@/components/site/PageHero"
 import { Reveal } from "@/components/site/Reveal"
+import { PlayerRegistrationForm } from "@/components/site/PlayerRegistrationForm"
 
 export const revalidate = 60
 
@@ -129,6 +130,22 @@ export default async function GetInvolvedPage() {
           </Reveal>
         </section>
       )}
+
+      <section id="register" className="mx-auto max-w-4xl px-5 pb-24">
+        <Reveal>
+          <p className="eyebrow">Players</p>
+          <div className="rule-gold mt-4" />
+          <h2 className="mt-6 text-4xl sm:text-5xl">
+            Are you a player? Connect with us
+          </h2>
+          <p className="mt-4 text-sm text-muted-foreground">
+            Register here — you get a confirmation email and our team is notified instantly.
+          </p>
+        </Reveal>
+        <div className="mt-10">
+          <PlayerRegistrationForm />
+        </div>
+      </section>
 
       <section className="grain relative overflow-hidden border-y border-border">
         {/* eslint-disable-next-line @next/next/no-img-element */}

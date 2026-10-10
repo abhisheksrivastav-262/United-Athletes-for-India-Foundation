@@ -106,6 +106,15 @@ export {
   updateEnquiry,
   deleteEnquiry,
 
+  // case studies
+  createCaseStudy,
+  updateCaseStudy,
+  deleteCaseStudy,
+
+  // player registrations
+  updatePlayerRegistration,
+  deletePlayerRegistration,
+
   // admin users
   updateAdminUser,
   deleteAdminUser,
@@ -149,6 +158,11 @@ export {
   getHomepageFeatured,
   getEnquiries,
   getEnquiryById,
+  getCaseStudyById,
+  getCaseStudies,
+  getAllCaseStudies,
+  getPlayerRegistrations,
+  getPlayerRegistrationById,
   getAllAdminProfiles,
   getActivityLogs,
   getDashboardStats,
@@ -185,6 +199,8 @@ export type {
   Team,
   Testimonial,
   GalleryItem,
+  CaseStudy,
+  PlayerRegistration,
   HomepageHero,
   HomepageSection,
   HomepageFeatured,

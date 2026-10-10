@@ -116,7 +116,7 @@ export function DonationForm({ initialConfig }: { initialConfig: DonationConfig 
   }, [])
 
   const currentAmount = isCustom ? Number(customAmount) || 0 : amount
-  const minAmount = config.min_amount || 100
+  const minAmount = config.min_amount || 1
 
   function handleSelectPreset(val: number) {
     setIsCustom(false)
@@ -126,8 +126,11 @@ export function DonationForm({ initialConfig }: { initialConfig: DonationConfig 
   }
 
   function handleCustomChange(val: string) {
+    // Digits only — free entry so ANY amount (10, 20, 25, 37...) works.
+    // No browser-native min/step interference.
+    const digits = val.replace(/[^0-9]/g, "")
     setIsCustom(true)
-    setCustomAmount(val)
+    setCustomAmount(digits)
     setErrorMsg("")
   }
 
@@ -145,8 +148,13 @@ export function DonationForm({ initialConfig }: { initialConfig: DonationConfig 
       return
     }
 
-    if (!donorEmail.trim() || !donorEmail.includes("@")) {
-      setErrorMsg("Please enter a valid email address for your 80G tax receipt.")
+    if (donorPhone.replace(/\D/g, "").length < 10) {
+      setErrorMsg("Please enter a valid 10-digit phone number.")
+      return
+    }
+
+    if (donorEmail.trim() && !donorEmail.includes("@")) {
+      setErrorMsg("Please enter a valid email address or leave it blank.")
       return
     }
 
@@ -356,7 +364,12 @@ export function DonationForm({ initialConfig }: { initialConfig: DonationConfig 
         <div className="mt-4 p-3 rounded-lg bg-primary/10 border border-primary/20 text-xs text-primary/90 text-left flex items-start gap-2">
           <ShieldCheck size={16} className="shrink-0 mt-0.5 text-primary" />
           <span>
-            A formal 80G tax exemption certificate and official acknowledgement have been scheduled to your registered email (<strong>{completed.donor_email}</strong>).
+            A formal 80G tax exemption certificate and official acknowledgement{" "}
+            {completed.donor_email ? (
+              <>have been scheduled to your registered email (<strong>{completed.donor_email}</strong>)</>
+            ) : (
+              <>will be shared with you on your registered phone number</>
+            )}.
           </span>
         </div>
 
@@ -427,12 +440,13 @@ export function DonationForm({ initialConfig }: { initialConfig: DonationConfig 
             ₹
           </div>
           <input
-            type="number"
-            min={minAmount}
-            step="100"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            autoComplete="off"
             value={customAmount}
             onChange={(e) => handleCustomChange(e.target.value)}
-            placeholder="Or enter custom amount in Rupees (e.g. 15000)"
+            placeholder="Or enter any custom amount in Rupees (e.g. 10, 25, 37)"
             className={`w-full rounded-lg border bg-background/60 py-3.5 pl-9 pr-4 text-sm sm:text-base font-semibold outline-none transition-colors ${
               isCustom
                 ? "border-primary text-primary ring-2 ring-primary/20"
@@ -504,11 +518,10 @@ export function DonationForm({ initialConfig }: { initialConfig: DonationConfig 
 
           <div>
             <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-1.5">
-              Email Address <span className="text-primary">*</span>
+              Email Address <span className="normal-case tracking-normal">(Optional)</span>
             </label>
             <input
               type="email"
-              required
               value={donorEmail}
               onChange={(e) => setDonorEmail(e.target.value)}
               placeholder="e.g. rajesh@example.com"
@@ -520,10 +533,11 @@ export function DonationForm({ initialConfig }: { initialConfig: DonationConfig 
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-1.5">
-              Phone Number
+              Phone Number <span className="text-primary">*</span>
             </label>
             <input
               type="tel"
+              required
               value={donorPhone}
               onChange={(e) => setDonorPhone(e.target.value)}
               placeholder="+91 98765 43210"

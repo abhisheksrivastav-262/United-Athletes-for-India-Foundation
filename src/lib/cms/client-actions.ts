@@ -712,6 +712,64 @@ export async function deleteEnquiry(id: string): Promise<Result<never>> {
   return { data: null, error: null }
 }
 
+// ── Case Studies ─────────────────────────────────────────────────────────────
+
+function normalizeCaseStudyStatusClient(status?: unknown): string {
+  if (status === "published" || status === "active" || !status) return "published"
+  if (status === "draft" || status === "inactive") return "draft"
+  if (status === "archived") return "archived"
+  return String(status)
+}
+
+export async function createCaseStudy(input: Record<string, unknown>): Promise<Result> {
+  const supabase = createClient()
+  const payload = { ...input, status: normalizeCaseStudyStatusClient(input.status) }
+  const { data, error } = await supabase.from("case_studies").insert(payload).select().single()
+  if (error) return { data: null, error: errMessage(error) }
+  return { data, error: null }
+}
+
+export async function updateCaseStudy(id: string, input: Record<string, unknown>): Promise<Result> {
+  const supabase = createClient()
+  const payload = {
+    ...input,
+    ...(input.status !== undefined ? { status: normalizeCaseStudyStatusClient(input.status) } : {}),
+  }
+  const { data, error } = await supabase.from("case_studies").update(payload).eq("id", id).select().single()
+  if (error) return { data: null, error: errMessage(error) }
+  return { data, error: null }
+}
+
+export async function deleteCaseStudy(id: string): Promise<Result<never>> {
+  const supabase = createClient()
+  const { error } = await supabase.from("case_studies").delete().eq("id", id)
+  if (error) return { data: null, error: errMessage(error) }
+  return { data: null, error: null }
+}
+
+// ── Player Registrations ─────────────────────────────────────────────────────
+
+export async function updatePlayerRegistration(id: string, status: string, notes?: string): Promise<Result> {
+  const supabase = createClient()
+  const updateData: Record<string, unknown> = { status }
+  if (notes !== undefined) updateData.admin_notes = notes
+  const { data, error } = await supabase
+    .from("player_registrations")
+    .update(updateData)
+    .eq("id", id)
+    .select()
+    .single()
+  if (error) return { data: null, error: errMessage(error) }
+  return { data, error: null }
+}
+
+export async function deletePlayerRegistration(id: string): Promise<Result<never>> {
+  const supabase = createClient()
+  const { error } = await supabase.from("player_registrations").delete().eq("id", id)
+  if (error) return { data: null, error: errMessage(error) }
+  return { data: null, error: null }
+}
+
 // ── Admin users ──────────────────────────────────────────────────────────────
 
 export async function updateAdminUser(id: string, input: Record<string, unknown>): Promise<Result> {

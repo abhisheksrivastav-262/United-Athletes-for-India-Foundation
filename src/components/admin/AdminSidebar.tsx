@@ -30,6 +30,8 @@ import {
   HeartHandshake,
   CreditCard,
   IndianRupee,
+  ClipboardList,
+  FolderKanban,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
@@ -72,7 +74,9 @@ const NAV_ITEMS: NavItem[] = [
       { label: "Programmes", href: "/admin/programmes", icon: BookOpen },
       { label: "Events & Meets", href: "/admin/events", icon: Calendar },
       { label: "Articles & News", href: "/admin/articles", icon: Newspaper },
+      { label: "Information Bulletin", href: "/admin/articles", icon: Mail },
       { label: "Categories", href: "/admin/article-categories", icon: Tag },
+      { label: "Case Studies", href: "/admin/case-studies", icon: FolderKanban },
       { label: "Testimonials", href: "/admin/testimonials", icon: MessageSquareQuote },
       { label: "Gallery", href: "/admin/gallery", icon: Images },
       { label: "Teams & Squads", href: "/admin/teams", icon: Users },
@@ -83,6 +87,7 @@ const NAV_ITEMS: NavItem[] = [
     icon: Mail,
     children: [
       { label: "Enquiries", href: "/admin/enquiries", icon: Mail },
+      { label: "Player Registrations", href: "/admin/player-registrations", icon: ClipboardList },
     ],
   },
   {

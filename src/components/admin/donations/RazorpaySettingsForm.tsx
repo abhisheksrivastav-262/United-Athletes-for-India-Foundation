@@ -31,7 +31,7 @@ export function RazorpaySettingsForm({ initialSettings }: { initialSettings: Raz
     is_enabled: initialSettings.is_enabled ?? true,
     mode: initialSettings.mode || "test",
     currency: initialSettings.currency || "INR",
-    min_amount: initialSettings.min_amount || 100,
+    min_amount: initialSettings.min_amount || 1,
     suggested_amounts: (initialSettings.suggested_amounts || [500, 1000, 2500, 5000, 10000]).join(", "),
     tax_benefit_info:
       initialSettings.tax_benefit_info ||
@@ -113,7 +113,7 @@ export function RazorpaySettingsForm({ initialSettings }: { initialSettings: Raz
         is_enabled: form.is_enabled,
         mode: detectedMode,
         currency: form.currency.trim().toUpperCase() || "INR",
-        min_amount: Number(form.min_amount) || 100,
+        min_amount: Number(form.min_amount) || 1,
         suggested_amounts: parsedAmounts.length > 0 ? parsedAmounts : [500, 1000, 2500, 5000, 10000],
         tax_benefit_info: form.tax_benefit_info.trim(),
         organization_name: form.organization_name.trim(),

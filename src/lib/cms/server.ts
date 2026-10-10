@@ -19,6 +19,7 @@ import type {
   Team,
   Testimonial,
   GalleryItem,
+  CaseStudy,
   HomepageSection,
   HomepageHero,
   HomepageFeatured,
@@ -286,7 +287,7 @@ export const DEFAULT_ATHLETES: Athlete[] = [
     id: "ath-1",
     name: "Athletics (Track & Field)",
     slug: "athletics-track-and-field",
-    photo: null,
+    photo: "/assets/about-athlete.jpg",
     sport: "Track & Field",
     category: "Sprints, Relays, Jumps & Throws",
     biography: "Comprehensive training and grassroots support for track and field events, fostering next-generation athletic talent across India.",
@@ -302,7 +303,7 @@ export const DEFAULT_ATHLETES: Athlete[] = [
     id: "ath-2",
     name: "Badminton",
     slug: "badminton",
-    photo: null,
+    photo: "/assets/hero-athletes.jpg",
     sport: "Racquet Sports",
     category: "Singles, Doubles & Mixed Doubles",
     biography: "Elite coaching and equipment grants for promising badminton talent preparing for national circuits and international opens.",
@@ -318,7 +319,7 @@ export const DEFAULT_ATHLETES: Athlete[] = [
     id: "ath-3",
     name: "Football",
     slug: "football",
-    photo: null,
+    photo: "/assets/community.jpg",
     sport: "Team Sports",
     category: "Youth Academy & Grassroots Leagues",
     biography: "Grassroots academies and tactical training camps empowering aspiring footballers across regional talent hubs.",
@@ -334,7 +335,7 @@ export const DEFAULT_ATHLETES: Athlete[] = [
     id: "ath-4",
     name: "Cricket",
     slug: "cricket",
-    photo: null,
+    photo: "/assets/equipment.jpg",
     sport: "Team Sports",
     category: "Youth Development & Pace Bowling Camp",
     biography: "Structured youth clinics, gear distribution, and coaching masterclasses nurturing grassroots cricket talent.",
@@ -350,7 +351,7 @@ export const DEFAULT_ATHLETES: Athlete[] = [
     id: "ath-5",
     name: "Wrestling",
     slug: "wrestling",
-    photo: null,
+    photo: "/assets/facility.jpg",
     sport: "Combat Sports",
     category: "Freestyle & Greco-Roman",
     biography: "Specialized mats, strength conditioning, and nutritional support for emerging wrestlers across India training centers.",
@@ -366,7 +367,7 @@ export const DEFAULT_ATHLETES: Athlete[] = [
     id: "ath-6",
     name: "Boxing",
     slug: "boxing",
-    photo: null,
+    photo: "/assets/para-athlete.jpg",
     sport: "Combat Sports",
     category: "Olympic Divisions & Youth Training",
     biography: "Precision footwork, tactical spar conditioning, and tournament sponsorship for grassroots pugilists.",
@@ -382,7 +383,7 @@ export const DEFAULT_ATHLETES: Athlete[] = [
     id: "ath-7",
     name: "Archery",
     slug: "archery",
-    photo: null,
+    photo: "/assets/programme-hero.jpg",
     sport: "Precision Sports",
     category: "Recurve & Compound",
     biography: "High-grade bow kits, mental conditioning, and target training facilities supporting dedicated junior archers.",
@@ -398,7 +399,7 @@ export const DEFAULT_ATHLETES: Athlete[] = [
     id: "ath-8",
     name: "Para Sports",
     slug: "para-sports",
-    photo: null,
+    photo: "/assets/support.jpg",
     sport: "Inclusive Sports",
     category: "Para Athletics, Badminton & Powerlifting",
     biography: "Dedicated sports wheelchairs, prosthetic maintenance, and equal training access for extraordinary para-athletes across India.",
@@ -994,6 +995,53 @@ export async function getGalleryItemsServer(opts?: {
     return data as GalleryItem[]
   } catch {
     return DEFAULT_GALLERY_ITEMS.slice(0, opts?.limit || 10)
+  }
+}
+
+// ── Case Studies ─────────────────────────────────────────────────────────────
+
+export const DEFAULT_CASE_STUDIES: CaseStudy[] = []
+
+export async function getCaseStudiesServer(opts?: {
+  status?: string
+  limit?: number
+}): Promise<CaseStudy[]> {
+  try {
+    const c = createPublicClient()
+    if (!c) return DEFAULT_CASE_STUDIES
+    let q = c
+      .from("case_studies")
+      .select("*")
+      .order("display_order", { ascending: true })
+      .order("created_at", { ascending: false })
+    if (opts?.status) {
+      q = q.eq("status", opts.status)
+    } else {
+      q = q.eq("status", "published")
+    }
+    if (opts?.limit) q = q.limit(opts.limit)
+    const { data, error } = await q
+    if (error || !data) return DEFAULT_CASE_STUDIES
+    return data as CaseStudy[]
+  } catch {
+    return DEFAULT_CASE_STUDIES
+  }
+}
+
+export async function getCaseStudyBySlugServer(slug: string): Promise<CaseStudy | null> {
+  try {
+    const c = createPublicClient()
+    if (!c) return null
+    const { data, error } = await c
+      .from("case_studies")
+      .select("*")
+      .eq("slug", slug)
+      .eq("status", "published")
+      .maybeSingle()
+    if (error) return null
+    return (data as CaseStudy) || null
+  } catch {
+    return null
   }
 }
 

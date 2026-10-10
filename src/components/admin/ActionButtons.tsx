@@ -14,6 +14,9 @@ import {
   deleteTestimonial,
   deleteGalleryItem,
   deleteCmsPage,
+  deleteCaseStudy,
+  deleteEnquiry,
+  deletePlayerRegistration,
   createActivityLog,
   getCurrentUser,
 } from "@/lib/cms/client-actions"
@@ -50,6 +53,16 @@ async function performDelete(entityType: string, id: string): Promise<{ error: s
       return deleteGalleryItem(id)
     case "testimonial":
       return deleteTestimonial(id)
+    case "case-study":
+    case "case study":
+    case "casestudy":
+      return deleteCaseStudy(id)
+    case "enquiry":
+      return deleteEnquiry(id)
+    case "player-registration":
+    case "player registration":
+    case "registration":
+      return deletePlayerRegistration(id)
     default:
       return { error: `Unsupported entity type: ${entityType}` }
   }

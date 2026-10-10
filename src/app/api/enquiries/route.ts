@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import {
+  sendEnquiryWelcomeEmail,
+  sendEnquiryAdminNotifyEmail,
+  getAdminRecipient,
+} from '@/lib/email'
 
 export const runtime = 'nodejs'
 
@@ -42,6 +47,23 @@ export async function POST(req: NextRequest) {
     if (error) {
       console.error('[api/enquiries] insert failed:', error.message)
       return NextResponse.json({ error: 'Could not submit your message. Please try again.' }, { status: 500 })
+    }
+
+    // Email to visitor + to us (best-effort, never blocks response)
+    try {
+      await sendEnquiryWelcomeEmail(data.email, data.name)
+      const adminEmail = getAdminRecipient()
+      if (adminEmail) {
+        await sendEnquiryAdminNotifyEmail(adminEmail, {
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          subject: data.subject,
+          message: data.message,
+        })
+      }
+    } catch (e) {
+      console.error('[api/enquiries] email failed:', e)
     }
 
     return NextResponse.json({ success: true, id: data.id })
